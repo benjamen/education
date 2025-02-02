@@ -17,6 +17,22 @@ frappe.ui.form.on('Student Attendance Tool', {
         },
       }
     })
+    // Add an Attendance Code field if it's not already present
+    frm.add_custom_button(__('Enter Attendance Code'), function () {
+      frappe.prompt(
+        {
+          label: __('Attendance Code'),
+          fieldname: 'attendance_code',
+          fieldtype: 'Data',
+          reqd: 1
+        },
+        (values) => {
+          frm.set_value('attendance_code', values.attendance_code)
+        },
+        __('Enter Attendance Code'),
+        __('Submit')
+      )
+    })
   },
 
   refresh: function (frm) {
@@ -94,12 +110,13 @@ education.StudentsEditor = class StudentsEditor {
     var me = this
 
     $(this.wrapper).empty()
-    var student_toolbar = $(
-      '<p>\
-			<button class="btn btn-default btn-add btn-xs" style="margin-right: 5px;"></button>\
-			<button class="btn btn-xs btn-default btn-remove" style="margin-right: 5px;"></button>\
-			<button class="btn btn-default btn-primary btn-mark-att btn-xs"></button></p>'
-    ).appendTo($(this.wrapper))
+    var student_toolbar = $(`
+      <p>
+        <button class="btn btn-default btn-add btn-xs" style="margin-right: 5px;"></button>
+        <button class="btn btn-xs btn-default btn-remove" style="margin-right: 5px;"></button>
+        <button class="btn btn-default btn-primary btn-mark-att btn-xs"></button>
+      </p>
+    `).appendTo($(this.wrapper))
 
     student_toolbar
       .find('.btn-add')
@@ -132,6 +149,11 @@ education.StudentsEditor = class StudentsEditor {
       .html(__('Mark Attendance'))
       .removeClass('btn-default')
       .on('click', function () {
+        if (!frm.doc.attendance_code) {
+          frappe.msgprint(__('Please enter an Attendance Code before marking attendance.'));
+          return;
+        }
+
         $(me.wrapper.find('.btn-mark-att')).attr('disabled', true)
         var studs = []
         $(me.wrapper.find('input[type="checkbox"]')).each(function (i, check) {
@@ -171,6 +193,7 @@ education.StudentsEditor = class StudentsEditor {
                   student_group: frm.doc.student_group,
                   course_schedule: frm.doc.course_schedule,
                   date: frm.doc.date,
+                  attendance_code: frm.doc.attendance_code // Include attendance code here
                 },
                 callback: function (r) {
                   $(me.wrapper.find('.btn-mark-att')).attr('disabled', false)
